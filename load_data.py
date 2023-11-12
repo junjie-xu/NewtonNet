@@ -15,13 +15,15 @@ from ogb.nodeproppred import NodePropPredDataset
 from os import path
 import gdown
 from torch_sparse import SparseTensor
-from google_drive_downloader import GoogleDriveDownloader as gdd
+# from google_drive_downloader import GoogleDriveDownloader as gdd
+# from ogb.nodeproppred import PygNodePropPredDataset, Evaluator
 
 
-def load_dataset(dataname, train_prop, valid_prop, test_prop, num_masks=5):
+def load_dataset(dataname, train_prop, valid_prop, test_prop, num_masks):
     assert dataname in ('cora', 'citeseer', 'pubmed', 'texas', 'wisconsin', 'cornell', 'squirrel',
                         'chameleon', 'crocodile', 'computers', 'photo', 'actor', 'twitch', 'fb100',
-                        'Penn94', 'deezer', 'year', 'snap-patents', 'pokec', 'yelpchi', 'gamer'), 'Invalid dataset'
+                        'Penn94', 'deezer', 'year', 'snap-patents', 'pokec', 'yelpchi', 'gamer',
+                        'ogbn-arxiv', 'ogbn-products', 'ogbn-proteins', 'genius'), 'Invalid dataset'
 
     if dataname in ['cora', 'citeseer', 'pubmed']:
         dataset = Planetoid(root='./data/', name=dataname)
@@ -87,6 +89,12 @@ def load_dataset(dataname, train_prop, valid_prop, test_prop, num_masks=5):
                       for _ in range(num_masks)]
         data.train_mask, data.val_mask, data.test_mask = index_to_mask(splits_lst, data.num_nodes)
 
+    elif dataname == 'genius':
+        data = load_genius()
+        splits_lst = [rand_train_test_idx(data.y, train_prop=train_prop, valid_prop=valid_prop, test_prop=test_prop)
+                      for _ in range(num_masks)]
+        data.train_mask, data.val_mask, data.test_mask = index_to_mask(splits_lst, data.num_nodes)
+
     elif dataname == 'year':
         data = load_arxiv_year()
         splits_lst = [rand_train_test_idx(data.y, train_prop=train_prop, valid_prop=valid_prop, test_prop=test_prop)
@@ -116,6 +124,14 @@ def load_dataset(dataname, train_prop, valid_prop, test_prop, num_masks=5):
         splits_lst = [rand_train_test_idx(data.y, train_prop=train_prop, valid_prop=valid_prop, test_prop=test_prop)
                       for _ in range(num_masks)]
         data.train_mask, data.val_mask, data.test_mask = index_to_mask(splits_lst, data.num_nodes)
+
+    # elif dataname in ('ogbn-arxiv', 'ogbn-products', 'ogbn-proteins'):
+    #     dataset = PygNodePropPredDataset(name=dataname)
+    #     data = dataset[0]
+    #     data.y = data.y.squeeze()
+    #     splits_lst = [rand_train_test_idx(data.y, train_prop=train_prop, valid_prop=valid_prop, test_prop=test_prop)
+    #                   for _ in range(num_masks)]
+    #     data.train_mask, data.val_mask, data.test_mask = index_to_mask(splits_lst, data.num_nodes)
 
     return data
 
@@ -147,12 +163,26 @@ def load_deezer():
     return data
 
 
+def load_genius():
+    filename = 'genius'
+    # dataset = NCDataset(filename)
+    fulldata = scipy.io.loadmat(f'data/genius.mat')
+
+    edge_index = torch.tensor(fulldata['edge_index'], dtype=torch.long)
+    node_feat = torch.tensor(fulldata['node_feat'], dtype=torch.float)
+    label = torch.tensor(fulldata['label'], dtype=torch.long).squeeze()
+    num_nodes = label.shape[0]
+
+    data = Data(x=node_feat, edge_index=edge_index, y=label, num_nodes=label.shape[0])
+    return data
+
+
 def load_fb100_dataset(sub_dataname, train_prop, valid_prop, test_prop, num_masks):
     assert sub_dataname in ('Amherst41', 'Cornell5', 'Johns Hopkins55', 'Penn94', 'Reed98'), 'Invalid dataset'
     A, metadata = load_fb100(sub_dataname)
     # dataset = NCDataset(filename)
     edge_index = torch.tensor(np.array(A.nonzero()), dtype=torch.long)
-    metadata = metadata.astype(np.int)
+    metadata = metadata.astype(np.int64)
     label = metadata[:, 1] - 1  # gender label, -1 means unlabeled
     label = torch.tensor(label, dtype=torch.long)
 

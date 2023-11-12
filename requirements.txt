@@ -1,0 +1,63 @@
+alembic==1.12.1
+beautifulsoup4==4.12.2
+Bottleneck @ file:///opt/conda/conda-bld/bottleneck_1657175564434/work
+Brotli @ file:///tmp/abs_ecyw11_7ze/croots/recipe/brotli-split_1659616059936/work
+certifi @ file:///croot/certifi_1690232220950/work/certifi
+cffi @ file:///croot/cffi_1670423208954/work
+charset-normalizer @ file:///tmp/build/80754af9/charset-normalizer_1630003229654/work
+colorlog==6.7.0
+cryptography @ file:///croot/cryptography_1694444244250/work
+filelock @ file:///croot/filelock_1672387128942/work
+fsspec==2023.10.0
+gdown==4.7.1
+gmpy2 @ file:///tmp/build/80754af9/gmpy2_1645455533097/work
+greenlet==3.0.1
+idna @ file:///croot/idna_1666125576474/work
+Jinja2 @ file:///croot/jinja2_1666908132255/work
+joblib @ file:///croot/joblib_1685113087166/work
+littleutils==0.2.2
+Mako==1.3.0
+MarkupSafe @ file:///opt/conda/conda-bld/markupsafe_1654597864307/work
+mkl-fft @ file:///croot/mkl_fft_1695058164594/work
+mkl-random @ file:///croot/mkl_random_1695059800811/work
+mkl-service==2.4.0
+mpmath @ file:///croot/mpmath_1690848262763/work
+networkx @ file:///croot/networkx_1690561992265/work
+numexpr @ file:///croot/numexpr_1696515281613/work
+numpy @ file:///croot/numpy_and_numpy_base_1695830428084/work/dist/numpy-1.26.0-cp310-cp310-linux_x86_64.whl#sha256=fc2732718bc9e06a7b702492cb4f5afffe9671083930452d894377bf563464a3
+ogb==1.3.6
+optuna==3.4.0
+outdated==0.2.2
+packaging==23.2
+pandas @ file:///croot/pandas_1697477158611/work/dist/pandas-2.1.1-cp310-cp310-linux_x86_64.whl#sha256=9030ae12668e518e702e668fa89f07f2847a175cdd526f95e39cb603d11ed9b8
+Pillow @ file:///croot/pillow_1696580024257/work
+psutil @ file:///opt/conda/conda-bld/psutil_1656431268089/work
+pycparser @ file:///tmp/build/80754af9/pycparser_1636541352034/work
+pyg-lib==0.3.1+pt21cu118
+pyOpenSSL @ file:///croot/pyopenssl_1690223430423/work
+pyparsing @ file:///opt/conda/conda-bld/pyparsing_1661452539315/work
+PySocks @ file:///home/builder/ci_310/pysocks_1640793678128/work
+python-dateutil @ file:///tmp/build/80754af9/python-dateutil_1626374649649/work
+pytz @ file:///croot/pytz_1695131579487/work
+PyYAML @ file:///croot/pyyaml_1698096049011/work
+requests @ file:///croot/requests_1690400202158/work
+scikit-learn @ file:///croot/scikit-learn_1690978916802/work
+scipy @ file:///croot/scipy_1696543286448/work/dist/scipy-1.11.3-cp310-cp310-linux_x86_64.whl#sha256=16a8c87e543daeb96d1310b2283f542fef2de84ee7090f60187eb71f71cb430c
+six @ file:///tmp/build/80754af9/six_1644875935023/work
+soupsieve==2.5
+SQLAlchemy==2.0.23
+sympy @ file:///croot/sympy_1668202399572/work
+threadpoolctl @ file:///Users/ktietz/demo/mc3/conda-bld/threadpoolctl_1629802263681/work
+torch==2.1.0
+torch-cluster==1.6.3+pt21cu118
+torch-scatter==2.1.2+pt21cu118
+torch-sparse==0.6.18+pt21cu118
+torch-spline-conv==1.2.2+pt21cu118
+torch_geometric @ file:///usr/share/miniconda/envs/test/conda-bld/pyg_1697445574149/work
+torchaudio==2.1.0
+torchvision==0.16.0
+tqdm @ file:///croot/tqdm_1679561862951/work
+triton==2.1.0
+typing_extensions @ file:///croot/typing_extensions_1690297465030/work
+tzdata @ file:///croot/python-tzdata_1690578112552/work
+urllib3 @ file:///croot/urllib3_1698257533958/work

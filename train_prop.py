@@ -24,11 +24,6 @@ def train(model, optimizer, epoch):
             -args.gamma2 * (-torch.abs(ratio - face)) * torch.norm(model.prop.temp[onethird:twothirds]) + \
             -args.gamma3 * (face - ratio) * torch.norm(model.prop.temp[twothirds:])
 
-
-    # regu = -args.gamma * (ratio - face) * torch.norm(model.prop.temp[:half]) + \
-    #         -args.gamma3 * (face - ratio) * torch.norm(model.prop.temp[half:])
-
-
     loss = class_loss + regu
     loss.backward()
     optimizer.step()
@@ -73,7 +68,6 @@ if __name__ == '__main__':
     face = 1 / num_classes
 
     eq = data.y[data.edge_index[0]] == data.y[data.edge_index[1]]
-    print("!!!", eq.sum() / eq.shape[0])
 
 
 
@@ -121,10 +115,6 @@ if __name__ == '__main__':
                 log = 'Epoch:{:04d}, Train_loss:{:.4f}, Train_acc:{:.3f}, Val_acc:{:.3f}, Test_acc:{:.3f}, Best_test_acc:{:.3f}'
                 print(log.format(epoch, train_loss, train_acc * 100, val_acc * 100, test_acc * 100, best_test_acc * 100))
                 print('Ratio: ', ratio)
-
-            # if epoch % 100 == 0:
-            #     print('Temp: ', model.prop.temp)
-            #     print('Weights: ', model.prop.weights)
 
 
         best_val_acc_multi.append(best_val_acc)

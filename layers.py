@@ -14,8 +14,8 @@ import torch.nn.functional as F
 from torch_geometric.nn.conv.gcn_conv import gcn_norm
 import numpy as np
 import scipy
-import pandas as pd
 from torch_sparse import SparseTensor, matmul
+from math import factorial
 
 
 
@@ -310,8 +310,10 @@ class Bern_prop(MessagePassing):
         TEMP=F.relu(self.temp)
 
         if self.Lap_norm is None:
+            # L=I-D^(-0.5)AD^(-0.5)
             self.Lap_edge_index, self.Lap_norm = get_laplacian(edge_index, edge_weight, normalization='sym',
                                                                dtype=x.dtype, num_nodes=x.size(self.node_dim))
+            # 2I-L
             self.edge_index2, self.norm2 = add_self_loops(self.Lap_edge_index, -self.Lap_norm, fill_value=2.,
                                                           num_nodes=x.size(self.node_dim))
 
@@ -335,6 +337,63 @@ class Bern_prop(MessagePassing):
 
     def message(self, x_j, norm):
         return norm.view(-1, 1) * x_j
+
+
+
+class Jacobi_prop(MessagePassing):
+    def __init__(self, args, bias=True, **kwargs):
+        super(Jacobi_prop, self).__init__(aggr='add', **kwargs)
+
+        self.K = args.K
+        self.a = args.a
+        self.b = args.b
+        self.device = args.device
+        self.Lap_edge_index = None
+        self.Lap_norm = None
+        self.temp = Parameter(torch.Tensor(self.K + 1))
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        self.temp.data.fill_(1)
+
+    def forward(self, x, edge_index, edge_weight=None):
+        TEMP=F.relu(self.temp)
+
+        if self.Lap_norm is None:
+            # L=I-D^(-0.5)AD^(-0.5)
+            self.Lap_edge_index, self.Lap_norm = get_laplacian(edge_index, edge_weight, normalization='sym',
+                                                               dtype=x.dtype, num_nodes=x.size(self.node_dim))
+            # 2I-L
+            self.edge_index2, self.norm2 = add_self_loops(self.Lap_edge_index, -self.Lap_norm, fill_value=2.,
+                                                          num_nodes=x.size(self.node_dim))
+
+        tmp = []
+        tmp.append(x)
+        for i in range(self.K):
+            x = self.propagate(self.edge_index2, x=x, norm=self.norm2, size=None)
+            tmp.append(x)
+
+        out = TEMP[0] * self.coef(0, 0) * x
+
+        for k in range(self.K):
+            for s in range(k+1):
+                tmp_x = tmp[s]
+                for j in range(k-s):
+                    tmp_x = self.propagate(self.Lap_edge_index, x=x, norm=self.Lap_norm, size=None)
+                # when finish A^(k-s)B^s x
+                out += TEMP[k] * self.coef(k, s) * tmp_x
+
+        return out
+
+    def message(self, x_j, norm):
+        return norm.view(-1, 1) * x_j
+
+    def coef(self, k, s):
+        a = self.a
+        b = self.b
+        return (factorial(k+a) * factorial(k+b) * (-1)**(k-s)) / \
+               (2**k * factorial(s) * factorial(k+a-s) * factorial(b+s) * factorial(k-s))
+
 
 
 
@@ -452,12 +511,12 @@ class Newton_prop(MessagePassing):
 
         self.K = args.K
         self.device = args.device
-        self.weights = None
+        # self.weights = None
         self.Lap_edge_index = None
         self.Lap_norm = None
         self.temp = None
         self.points = points
-        print('Interpolated points: ', self.points)
+        # print('Interpolated points: ', self.points)
 
         self.temp = Parameter(torch.Tensor(self.K + 1))
         self.reset_parameters()
@@ -479,14 +538,72 @@ class Newton_prop(MessagePassing):
         if self.Lap_norm is None:
             self.Lap_edge_index, self.Lap_norm = get_laplacian(edge_index, edge_weight, normalization='sym',
                                                                dtype=x.dtype, num_nodes=x.size(self.node_dim))
+        quotients = self.k_quotient(self.K, self.points, TEMP)
+        # self.weights = quotients
+        out = quotients[0] * x
+
+        for k in range(1, self.K+1):
+            tmp_lap_edge, tmp_lap_norm = add_self_loops(self.Lap_edge_index, self.Lap_norm,
+                                                        fill_value=-self.points[k - 1], num_nodes=x.size(self.node_dim))
+            x = self.propagate(tmp_lap_edge, x=x, norm=tmp_lap_norm, size=None)
+            out += quotients[k] * x
+        return out
+
+    def message(self, x_j, norm):
+        return norm.view(-1, 1) * x_j
+
+
+
+class Newton_prop2(MessagePassing):
+    def __init__(self, args, points, **kwargs):
+        super(Newton_prop2, self).__init__(aggr='add', **kwargs)
+
+        self.K = args.K
+        self.device = args.device
+        self.weights = None
+        self.Lap_edge_index = None
+        self.Lap_norm = None
+        self.temp = None
+        self.points = points
+        self.tmp_lap_edge = []
+        self.tmp_lap_norm = []
+        # print('Interpolated points: ', self.points)
+
+        self.temp = Parameter(torch.Tensor(self.K + 1))
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        self.temp.data.fill_(1)
+
+    def k_quotient(self, k, points, values):
+        table = torch.zeros((k + 1, k + 1))
+        table[0] = values
+        for i in range(1, k + 1):
+            for j in range(i, k + 1):
+                table[i][j] = (table[i - 1][j] - table[i - 1][j - 1]) / (points[j] - points[j - i])
+        return table.diag()
+
+    def forward(self, x, edge_index, edge_weight=None):
+        TEMP = F.relu(self.temp)
+
+        if self.Lap_norm is None:
+            self.Lap_edge_index, self.Lap_norm = get_laplacian(edge_index, edge_weight, normalization='sym',
+                                                               dtype=x.dtype, num_nodes=x.size(self.node_dim))
+            for i in self.points:
+                t_edge, t_norm = add_self_loops(self.Lap_edge_index, self.Lap_norm, fill_value=-i,
+                                                            num_nodes=x.size(self.node_dim))
+                self.tmp_lap_edge.append(t_edge)
+                self.tmp_lap_norm.append(t_norm)
 
         quotients = self.k_quotient(self.K, self.points, TEMP)
         self.weights = quotients
         out = quotients[0] * x
 
         for k in range(1, self.K+1):
-            tmp_lap_edge, tmp_lap_norm = add_self_loops(self.Lap_edge_index, self.Lap_norm, fill_value=-self.points[k-1], num_nodes=x.size(self.node_dim))
-            x = self.propagate(tmp_lap_edge, x=x, norm=tmp_lap_norm, size=None)
+            # tmp_lap_edge, tmp_lap_norm = add_self_loops(self.Lap_edge_index, self.Lap_norm, fill_value=-self.points[k-1], num_nodes=x.size(self.node_dim))
+            t_edge = self.tmp_lap_edge[k-1]
+            t_norm = self.tmp_lap_norm[k-1]
+            x = self.propagate(t_edge, x=x, norm=t_norm, size=None)
             out += quotients[k] * x
 
         return out
@@ -495,16 +612,21 @@ class Newton_prop(MessagePassing):
         return norm.view(-1, 1) * x_j
 
 
-
 class Filter_prop(MessagePassing):
     def __init__(self, args, **kwargs):
         super(Filter_prop, self).__init__(aggr='add', **kwargs)
 
         self.adj = None
-        self.low = args.low
-        self.middle = args.middle
-        self.high = args.high
         self.mode = args.mode
+
+        # self.low = args.low
+        # self.middle = args.middle
+        # self.high = args.high
+        self.part1 = args.part1
+        self.part2 = args.part2
+        self.part3 = args.part3
+        self.part4 = args.part4
+
 
     def filter(self, e):
         if self.mode == '3':
@@ -522,8 +644,19 @@ class Filter_prop(MessagePassing):
                     e[i] = self.low
                 else:
                     e[i] = self.high
+
+        if self.mode == '4':
+            for i in range(len(e)):
+                if e[i] < 0.5:
+                    e[i] = self.part1
+                elif 0.5 <= e[i] < 1.0:
+                    e[i] = self.part2
+                elif 1.0 <= e[i] < 1.5:
+                    e[i] = self.part3
+                else:
+                    e[i] = self.part4
         else:
-            print("Wrong mode", '!' * 100)
+            print('!' * 20, "Wrong mode", '!' * 100)
         return e
 
     def forward(self, x, edge_index, edge_weight=None):
