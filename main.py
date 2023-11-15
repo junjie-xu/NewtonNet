@@ -81,8 +81,6 @@ if __name__ == '__main__':
         ratio = torch.tensor(face)
 
         model = Newton(num_features, args.hidden, num_classes, args, points=torch.linspace(0, 2, steps=args.K+1)).to(device)
-
-        # optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
         optimizer = torch.optim.Adam([
             {'params': model.lin1.parameters()},
             {'params': model.lin2.parameters()},
@@ -100,19 +98,16 @@ if __name__ == '__main__':
                 best_val_acc = val_acc
                 best_test_acc = test_acc
 
-
             if epoch % 10 == 0:
                 z = model(data.x, data.edge_index)
                 z = F.log_softmax(z, dim=1)
                 pred = z.max(1)[1]
                 ratio = homo_ratio(data, pred, train_mask)
 
-
             if epoch % 100 == 0:
                 log = 'Epoch:{:04d}, Train_loss:{:.4f}, Train_acc:{:.3f}, Val_acc:{:.3f}, Test_acc:{:.3f}, Best_test_acc:{:.3f}'
                 print(log.format(epoch, train_loss, train_acc * 100, val_acc * 100, test_acc * 100, best_test_acc * 100))
                 # print('Ratio: ', ratio)
-
 
         best_val_acc_multi.append(best_val_acc)
         test_acc_multi.append(best_test_acc)

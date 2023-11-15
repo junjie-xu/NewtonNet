@@ -37,7 +37,7 @@ def test(model):
 
 def parser_add_main_args(parser):
     # Data
-    parser.add_argument('--dataname', type=str, default='Penn94')
+    # parser.add_argument('--dataname', type=str, default='Penn94')
     parser.add_argument('--num_masks', type=int, default=5, help='number of masks')
     parser.add_argument('--train_prop', type=float, default=.6, help='training label proportion')
     parser.add_argument('--valid_prop', type=float, default=.2, help='validation label proportion')

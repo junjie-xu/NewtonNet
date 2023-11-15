@@ -1,5 +1,5 @@
 from utils import rand_train_test_idx, index_to_mask, WikipediaNetwork2, even_quantile_labels
-from torch_geometric.datasets import Planetoid, WebKB, Amazon, WikipediaNetwork, Actor
+from torch_geometric.datasets import Planetoid, WebKB, Amazon, WikipediaNetwork, Actor, HeterophilousGraphDataset
 import scipy.io
 from sklearn.preprocessing import label_binarize
 from torch_geometric.data import Data
@@ -13,17 +13,18 @@ import pandas as pd
 import json
 from ogb.nodeproppred import NodePropPredDataset
 from os import path
-import gdown
+# import gdown
 from torch_sparse import SparseTensor
 # from google_drive_downloader import GoogleDriveDownloader as gdd
-# from ogb.nodeproppred import PygNodePropPredDataset, Evaluator
+from ogb.nodeproppred import PygNodePropPredDataset, Evaluator
 
 
 def load_dataset(dataname, train_prop, valid_prop, test_prop, num_masks):
     assert dataname in ('cora', 'citeseer', 'pubmed', 'texas', 'wisconsin', 'cornell', 'squirrel',
                         'chameleon', 'crocodile', 'computers', 'photo', 'actor', 'twitch', 'fb100',
                         'Penn94', 'deezer', 'year', 'snap-patents', 'pokec', 'yelpchi', 'gamer',
-                        'ogbn-arxiv', 'ogbn-products', 'ogbn-proteins', 'genius'), 'Invalid dataset'
+                        'ogbn-arxiv', 'ogbn-products', 'ogbn-proteins', 'genius',
+                        'roman_empire', 'amazon_ratings', 'minesweeper', 'tolokers', 'questions'), 'Invalid dataset'
 
     if dataname in ['cora', 'citeseer', 'pubmed']:
         dataset = Planetoid(root='./data/', name=dataname)
@@ -43,10 +44,6 @@ def load_dataset(dataname, train_prop, valid_prop, test_prop, num_masks):
         splits_lst = [rand_train_test_idx(data.y, train_prop=train_prop, valid_prop=valid_prop, test_prop=test_prop)
                       for _ in range(num_masks)]
         data.train_mask, data.val_mask, data.test_mask = index_to_mask(splits_lst, data.num_nodes)
-
-    # elif dataname in ['squirrel', 'chameleon']:
-    #     dataset = WikipediaNetwork(root='./data/', name=dataname, geom_gcn_preprocess=True)
-    #     data = dataset[0]
 
     elif dataname in ['squirrel', 'chameleon']:
         preProcDs = WikipediaNetwork(root='./data/', name=dataname, geom_gcn_preprocess=False, transform=T.NormalizeFeatures())
@@ -125,13 +122,21 @@ def load_dataset(dataname, train_prop, valid_prop, test_prop, num_masks):
                       for _ in range(num_masks)]
         data.train_mask, data.val_mask, data.test_mask = index_to_mask(splits_lst, data.num_nodes)
 
-    # elif dataname in ('ogbn-arxiv', 'ogbn-products', 'ogbn-proteins'):
-    #     dataset = PygNodePropPredDataset(name=dataname)
-    #     data = dataset[0]
-    #     data.y = data.y.squeeze()
-    #     splits_lst = [rand_train_test_idx(data.y, train_prop=train_prop, valid_prop=valid_prop, test_prop=test_prop)
-    #                   for _ in range(num_masks)]
-    #     data.train_mask, data.val_mask, data.test_mask = index_to_mask(splits_lst, data.num_nodes)
+    elif dataname in ('ogbn-arxiv', 'ogbn-products', 'ogbn-proteins'):
+        dataset = PygNodePropPredDataset(name=dataname)
+        data = dataset[0]
+        data.y = data.y.squeeze()
+        splits_lst = [rand_train_test_idx(data.y, train_prop=train_prop, valid_prop=valid_prop, test_prop=test_prop)
+                      for _ in range(num_masks)]
+        data.train_mask, data.val_mask, data.test_mask = index_to_mask(splits_lst, data.num_nodes)
+        
+    elif dataname in ['roman_empire', 'amazon_ratings', 'minesweeper', 'tolokers', 'questions']:
+        dataset = HeterophilousGraphDataset(root='./data/', name=dataname)
+        data = dataset[0]
+        # data.y = data.y.squeeze()
+        splits_lst = [rand_train_test_idx(data.y, train_prop=train_prop, valid_prop=valid_prop, test_prop=test_prop)
+                      for _ in range(num_masks)]
+        data.train_mask, data.val_mask, data.test_mask = index_to_mask(splits_lst, data.num_nodes)
 
     return data
 

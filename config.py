@@ -1,8 +1,7 @@
-
 def parser_add_main_args(parser):
     # Data
     parser.add_argument('--dataname', type=str, default='chameleon')
-    parser.add_argument('--num_masks', type=int, default=10, help='number of masks')
+    parser.add_argument('--num_masks', type=int, default=5, help='number of masks')
     parser.add_argument('--train_prop', type=float, default=.6, help='training label proportion')
     parser.add_argument('--valid_prop', type=float, default=.2, help='validation label proportion')
     parser.add_argument('--test_prop', type=float, default=.2, help='test label proportion')
@@ -11,20 +10,21 @@ def parser_add_main_args(parser):
     parser.add_argument('--hidden', type=int, default=64)
     parser.add_argument('--L', type=int, default=2, help='number of conv layers')
     parser.add_argument('--K', type=int, default=5, help='Polynomial power')
-    parser.add_argument('--dropout', type=float, default=0., help='dropout for MLP')
+    parser.add_argument('--dropout', type=float, default=0.3, help='dropout for MLP')
     parser.add_argument('--dprate', type=float, default=0., help='dropout for propagation layer')
-    parser.add_argument('--gamma', type=float, default=3.0, help='coef for regularizer')
-    parser.add_argument('--gamma2', type=float, default=5.0, help='coef for regularizer')
-    parser.add_argument('--gamma3', type=float, default=.0, help='coef for regularizer')
+    parser.add_argument('--gamma', type=float, default=0.0, help='coef for regularizer')
+    parser.add_argument('--gamma2', type=float, default=0.0, help='coef for regularizer')
+    parser.add_argument('--gamma3', type=float, default=0.0, help='coef for regularizer')
 
     # Training
-    parser.add_argument('--epochs', type=int, default=3000)
-    parser.add_argument('--lr', type=float, default=0.05)
+    parser.add_argument('--epochs', type=int, default=2000)
+    parser.add_argument('--lr', type=float, default=0.005)
     parser.add_argument('--temp_lr', type=float, default=0.01)
     parser.add_argument('--device', type=str, default='cuda:0')
-    parser.add_argument('--weight_decay', type=float, default=0.000)
+    parser.add_argument('--weight_decay', type=float, default=0.0005)
     parser.add_argument('--seed', type=int, default=33780)
     parser.add_argument('--save_results', action="store_true")
+    parser.add_argument('--trails', type=int, default=10000)
 
     # Case Study
     # parser.add_argument('--mode', type=str, default='3', choices=['2', '3'], help='2: 2splits, 3: 3splits')

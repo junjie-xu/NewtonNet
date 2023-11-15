@@ -102,14 +102,6 @@ def synthetic_dataset(data, target_ratio):
 
 
 def CSBM(n, d, ratio, p, mu, train_prop=.6, valid_prop=.2, num_masks=5):
-    # n = 800 #number of nodes
-    # d = 5 # average degree
-    # ratio = edge homophily ratio
-    # Lambda = 1 # parameters
-    # p = 1000 # feature dim
-    # mu = 1 # mean of Gaussian
-    # gamma = n/p
-
     Lambda = np.sqrt(d) * (2 * ratio - 1)
     c_in = d + np.sqrt(d) * Lambda
     c_out = d - np.sqrt(d)*Lambda
@@ -142,7 +134,7 @@ def CSBM(n, d, ratio, p, mu, train_prop=.6, valid_prop=.2, num_masks=5):
     data = Data(x=torch.tensor(x, dtype=torch.float32),
                 edge_index=torch.tensor(edge_index),
                 y=torch.tensor((y + 1) // 2, dtype=torch.int64))
-    # order edge list and remove duplicates if any.
+
     data.coalesce()
 
     splits_lst = [rand_train_test_idx(data.y, train_prop=train_prop, valid_prop=valid_prop)
@@ -150,32 +142,5 @@ def CSBM(n, d, ratio, p, mu, train_prop=.6, valid_prop=.2, num_masks=5):
     data.train_mask, data.val_mask, data.test_mask = index_to_mask(splits_lst, data.num_nodes)
 
     return data
-
-
-
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='General Training Pipeline')
-    parser_add_main_args(parser)
-    args = parser.parse_args()
-    device = args.device
-    torch.manual_seed(args.seed)
-    np.random.seed(args.seed)
-    random.seed(args.seed)
-
-    # Load Data
-    data = load_dataset('chameleon', args.train_prop, args.valid_prop, args.num_masks)
-    data = data.to(device)
-    print('Args:', str(args))
-    print('Data:', data)
-    num_nodes = data.num_nodes
-    num_classes = data.y.max().item() + 1
-    num_features = data.x.shape[1]
-
-    # print(torch.bincount(data.y))
-    data = synthetic_dataset(data, 1.0)
-    print(data.edge_index.shape, edge_homo_ratio(data))
-
-
 
 

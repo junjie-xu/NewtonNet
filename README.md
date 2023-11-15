@@ -37,6 +37,11 @@ To reproduce the results in Table 1, use commands in scripts.sh
 python main.py --dataname chameleon --lr 0.05 --temp_lr 0.01 --K 5 --hidden 64 --weight_decay 0.0 --dropout 0.0 --dprate 0.0 --gamma 3 --gamma2 5 --gamma3 0
 ```
 
+To search your own optimal hyperparameters, use
+```
+python search_multi.py --dataname chameleon
+python search_binary.py --dataname genius
+```
 
 
 To reproduce the results in Fig. 1, run
