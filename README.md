@@ -1,5 +1,5 @@
 # NewtonNet: Shape-aware Graph Spectral Learning
-An official PyTorch implementation of the paper [Shape-aware Graph Spectral Learning](https://openreview.net/pdf?id=Yui55YzCao).
+An official PyTorch implementation of the paper [Shape-aware Graph Spectral Learning](https://arxiv.org/pdf/2310.10064.pdf).
 
 In this repository, we implement the *NewtonNet with Shape-aware Regularization*.
 
